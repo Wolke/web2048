@@ -8,124 +8,95 @@ class GameModel {
 
     initBoard() {
         this.board = Array(this.size).fill().map(() => Array(this.size).fill(0));
-        this.addRandomTile();
-        this.addRandomTile();
+        this.addNewTile();
+        this.addNewTile();
     }
 
-    addRandomTile() {
-        const emptyCells = [];
+    addNewTile() {
+        const emptyTiles = [];
         for (let i = 0; i < this.size; i++) {
             for (let j = 0; j < this.size; j++) {
                 if (this.board[i][j] === 0) {
-                    emptyCells.push({ i, j });
+                    emptyTiles.push({ x: i, y: j });
                 }
             }
         }
-        if (emptyCells.length > 0) {
-            const { i, j } = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-            this.board[i][j] = Math.random() < 0.9 ? 2 : 4;
+        if (emptyTiles.length > 0) {
+            const { x, y } = emptyTiles[Math.floor(Math.random() * emptyTiles.length)];
+            this.board[x][y] = Math.random() < 0.9 ? 2 : 4;
         }
-    }
-
-    move(direction) {
-        const originalBoard = JSON.parse(JSON.stringify(this.board));
-        let moved = false;
-
-        switch (direction) {
-            case 'up':
-                moved = this.moveUp();
-                break;
-            case 'down':
-                moved = this.moveDown();
-                break;
-            case 'left':
-                moved = this.moveLeft();
-                break;
-            case 'right':
-                moved = this.moveRight();
-                break;
-        }
-
-        if (moved) {
-            this.addRandomTile();
-        } else {
-            this.board = originalBoard;
-        }
-
-        return moved;
-    }
-
-    moveLeft() {
-        return this.processBoardMove(this.board);
-    }
-
-    moveRight() {
-        const flipped = this.flipHorizontally(this.board);
-        const moved = this.processBoardMove(flipped);
-        this.board = this.flipHorizontally(flipped);
-        return moved;
     }
 
     moveUp() {
-        const rotated = this.rotateLeft(this.board);
-        const moved = this.processBoardMove(rotated);
-        this.board = this.rotateRight(rotated);
-        return moved;
+        return this.move((col) => this.getColumn(col), this.setColumn.bind(this));
     }
 
     moveDown() {
-        const rotated = this.rotateRight(this.board);
-        const moved = this.processBoardMove(rotated);
-        this.board = this.rotateLeft(rotated);
-        return moved;
+        return this.move((col) => this.getColumn(col).reverse(), (col, newCol) => this.setColumn(col, newCol.reverse()));
     }
 
-    processBoardMove(board) {
+    moveLeft() {
+        return this.move((row) => this.board[row], this.setRow.bind(this));
+    }
+
+    moveRight() {
+        return this.move((row) => this.board[row].slice().reverse(), (row, newRow) => this.setRow(row, newRow.reverse()));
+    }
+
+    move(getLine, setLine) {
         let moved = false;
         for (let i = 0; i < this.size; i++) {
-            const result = this.processRowMove(board[i]);
-            board[i] = result.row;
-            this.score += result.score;
-            if (result.moved) moved = true;
-        }
-        return moved;
-    }
-
-    processRowMove(row) {
-        let newRow = row.filter(tile => tile !== 0);
-        let score = 0;
-        let moved = false;
-
-        for (let i = 0; i < newRow.length - 1; i++) {
-            if (newRow[i] === newRow[i + 1]) {
-                newRow[i] *= 2;
-                score += newRow[i];
-                newRow.splice(i + 1, 1);
+            let line = getLine(i);
+            let newLine = this.mergeLine(this.filterZeros(line));
+            if (newLine.length < this.size) {
+                newLine = newLine.concat(Array(this.size - newLine.length).fill(0));
+            }
+            if (setLine(i, newLine)) {
                 moved = true;
             }
         }
+        return moved;
+    }
 
-        while (newRow.length < this.size) {
-            newRow.push(0);
+    filterZeros(line) {
+        return line.filter(tile => tile !== 0);
+    }
+
+    mergeLine(line) {
+        for (let i = 0; i < line.length - 1; i++) {
+            if (line[i] === line[i + 1]) {
+                line[i] *= 2;
+                this.score += line[i];
+                line.splice(i + 1, 1);
+            }
         }
+        return line;
+    }
 
-        if (newRow.join(',') !== row.join(',')) {
-            moved = true;
+    getColumn(col) {
+        return this.board.map(row => row[col]);
+    }
+
+    setColumn(col, newCol) {
+        let changed = false;
+        for (let i = 0; i < this.size; i++) {
+            if (this.board[i][col] !== newCol[i]) {
+                this.board[i][col] = newCol[i];
+                changed = true;
+            }
         }
-
-        return { row: newRow, score, moved };
+        return changed;
     }
 
-    flipHorizontally(board) {
-        return board.map(row => row.slice().reverse());
-    }
-
-    rotateLeft(board) {
-        return board[0].map((_, index) => board.map(row => row[row.length - 1 - index]));
-    }
-
-    rotateRight(board) {
-        return board[0].map((_, index) => board.map(row => row[index]).reverse());
+    setRow(row, newRow) {
+        let changed = false;
+        for (let i = 0; i < this.size; i++) {
+            if (this.board[row][i] !== newRow[i]) {
+                this.board[row][i] = newRow[i];
+                changed = true;
+            }
+        }
+        return changed;
     }
 
     isGameOver() {
@@ -134,10 +105,10 @@ class GameModel {
                 if (this.board[i][j] === 0) {
                     return false;
                 }
-                if (
-                    (i < this.size - 1 && this.board[i][j] === this.board[i + 1][j]) ||
-                    (j < this.size - 1 && this.board[i][j] === this.board[i][j + 1])
-                ) {
+                if (j < this.size - 1 && this.board[i][j] === this.board[i][j + 1]) {
+                    return false;
+                }
+                if (i < this.size - 1 && this.board[i][j] === this.board[i + 1][j]) {
                     return false;
                 }
             }

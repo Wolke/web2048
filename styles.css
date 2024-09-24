@@ -1,0 +1,67 @@
+.mobile-controls {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-areas:
+    ". up ."
+    "left . right"
+    ". down .";
+  gap: 10px;
+  z-index: 1000; // 確保按鈕顯示在其他元素之上
+}
+
+.mobile-controls button {
+  width: 60px;
+  height: 60px;
+  font-size: 18px;
+  border-radius: 50%;
+  border: none;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  cursor: pointer;
+}
+
+#up-btn { grid-area: up; }
+#left-btn { grid-area: left; }
+#right-btn { grid-area: right; }
+#down-btn { grid-area: down; }
+
+@media (min-width: 768px) {
+  .mobile-controls {
+    display: none;
+  }
+}
+
+.direction-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.horizontal-buttons {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.direction-buttons button {
+  width: 60px;
+  height: 60px;
+  font-size: 24px;
+  margin: 5px;
+  background-color: #8f7a66;
+  color: #f9f6f2;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* 在桌面版隱藏方向按鈕 */
+@media (min-width: 768px) {
+  .direction-buttons {
+    display: none;
+  }
+}
