@@ -6,16 +6,26 @@ class GameController {
     }
 
     init() {
-        this.view.updateBoard(this.model.board);
-        this.view.updateScore(this.model.score);
-        document.addEventListener('keydown', this.handleKeyPress.bind(this));
-        document.getElementById('newGameButton').addEventListener('click', this.newGame.bind(this));
+        try {
+            this.view.updateBoard(this.model.board);
+            this.view.updateScore(this.model.score);
+            document.addEventListener('keydown', this.handleKeyPress.bind(this));
 
-        // 添加方向按鈕的事件監聽器
-        document.getElementById('upButton').addEventListener('click', () => this.handleKeyPress({ key: 'ArrowUp' }));
-        document.getElementById('downButton').addEventListener('click', () => this.handleKeyPress({ key: 'ArrowDown' }));
-        document.getElementById('leftButton').addEventListener('click', () => this.handleKeyPress({ key: 'ArrowLeft' }));
-        document.getElementById('rightButton').addEventListener('click', () => this.handleKeyPress({ key: 'ArrowRight' }));
+            const newGameButton = document.getElementById('newGameButton');
+            if (!newGameButton) throw new Error('無法找到 newGameButton');
+            newGameButton.addEventListener('click', this.newGame.bind(this));
+
+            const buttons = ['upButton', 'downButton', 'leftButton', 'rightButton'];
+            const directions = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+
+            buttons.forEach((buttonId, index) => {
+                const button = document.getElementById(buttonId);
+                if (!button) throw new Error(`無法找到 ${buttonId}`);
+                button.addEventListener('click', () => this.handleKeyPress({ key: directions[index] }));
+            });
+        } catch (error) {
+            console.error('初始化過程中發生錯誤:', error);
+        }
     }
 
     handleKeyPress(event) {
@@ -54,5 +64,9 @@ class GameController {
 
 // 初始化遊戲
 document.addEventListener('DOMContentLoaded', () => {
-    const game = new GameController(new GameModel(), new GameView());
+    try {
+        const game = new GameController(new GameModel(), new GameView());
+    } catch (error) {
+        console.error('遊戲初始化失敗:', error);
+    }
 });
