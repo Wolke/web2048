@@ -60,6 +60,11 @@ class GameController {
         this.view.updateBoard(this.model.board);
         this.view.updateScore(this.model.score);
     }
+
+    // 可以移除這個未使用的方法
+    // startGame() {
+    //     // Implement start game logic here
+    // }
 }
 
 // 初始化遊戲
